@@ -103,9 +103,9 @@ class GANimation(BaseModel):
         self._input_real_img_path = input['real_img_path']
 
         if len(self._gpu_ids) > 0:
-            self._input_real_img = self._input_real_img.cuda(self._gpu_ids[0], async=True)
-            self._input_real_cond = self._input_real_cond.cuda(self._gpu_ids[0], async=True)
-            self._input_desired_cond = self._input_desired_cond.cuda(self._gpu_ids[0], async=True)
+            self._input_real_img = self._input_real_img.cuda(self._gpu_ids[0])
+            self._input_real_cond = self._input_real_cond.cuda(self._gpu_ids[0])
+            self._input_desired_cond = self._input_desired_cond.cuda(self._gpu_ids[0])
 
     def set_train(self):
         self._G.train()
