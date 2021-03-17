@@ -71,7 +71,7 @@ class AusDataset(DatasetBase):
         conds_filepath = os.path.join(self._root, self._opt.aus_file)
         self._conds = self._read_conds(conds_filepath)
         for k in self._conds:
-            print(self._conds[k], len(self._conds[k]))
+            print(k, self._conds[k], len(self._conds[k]))
 
         self._ids = list(set(self._ids).intersection(set(self._conds.keys())))
 
