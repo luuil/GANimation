@@ -4,6 +4,7 @@ import numpy as np
 import os
 import torchvision
 import math
+from pickle5 import pickle
 
 
 def tensor2im(img, imtype=np.uint8, unnormalize=True, idx=0, nrows=None):
@@ -23,6 +24,7 @@ def tensor2im(img, imtype=np.uint8, unnormalize=True, idx=0, nrows=None):
     image_numpy = img.numpy()
     image_numpy_t = np.transpose(image_numpy, (1, 2, 0))
     image_numpy_t = image_numpy_t*254.0
+    image_numpy_t[image_numpy_t > 255.] = 255.
 
     return image_numpy_t.astype(imtype)
 
@@ -51,3 +53,18 @@ def save_image(image_numpy, image_path):
 def save_str_data(data, path):
     mkdir(os.path.dirname(path))
     np.savetxt(path, data, delimiter=",", fmt="%s")
+
+
+def read_pil_img_rgb(file):
+    assert os.path.exists(file)
+    return Image.open(file).convert('RGB')
+
+
+def pkl_save(content, file):
+    with open(file, 'wb') as f:
+        pickle.dump(content, f, pickle.HIGHEST_PROTOCOL)
+
+
+def pkl_load(file):
+    with open(file, 'rb') as f:
+        return pickle.load(f)

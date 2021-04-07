@@ -11,15 +11,15 @@ class Train:
     def __init__(self):
         self._opt = TrainOptions().parse()
         data_loader_train = CustomDatasetDataLoader(self._opt, is_for_train=True)
-        data_loader_test = CustomDatasetDataLoader(self._opt, is_for_train=False)
+        # data_loader_test = CustomDatasetDataLoader(self._opt, is_for_train=False)
 
         self._dataset_train = data_loader_train.load_data()
-        self._dataset_test = data_loader_test.load_data()
+        # self._dataset_test = data_loader_test.load_data()
 
         self._dataset_train_size = len(data_loader_train)
-        self._dataset_test_size = len(data_loader_test)
+        # self._dataset_test_size = len(data_loader_test)
         print('#train images = %d' % self._dataset_train_size)
-        print('#test images = %d' % self._dataset_test_size)
+        # print('#test images = %d' % self._dataset_test_size)
 
         self._model = ModelsFactory.get_by_name(self._opt.model, self._opt)
         self._tb_visualizer = TBVisualizer(self._opt)

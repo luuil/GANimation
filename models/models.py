@@ -13,6 +13,9 @@ class ModelsFactory:
         if model_name == 'ganimation':
             from .ganimation import GANimation
             model = GANimation(*args, **kwargs)
+        elif model_name == 'eye_animation':
+            from .eye_animation import EyeAnimation
+            model = EyeAnimation(*args, **kwargs)
         else:
             raise ValueError("Model %s not recognized." % model_name)
 

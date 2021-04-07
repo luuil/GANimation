@@ -14,6 +14,9 @@ class DatasetFactory:
         if dataset_name == 'aus':
             from data.dataset_aus import AusDataset
             dataset = AusDataset(opt, is_for_train)
+        elif dataset_name == 'eye':
+            from data.dataset_eye import EyeDataset
+            dataset = EyeDataset(opt.aus_file, opt.data_dir, is_train=is_for_train)
         else:
             raise ValueError("Dataset [%s] not recognized." % dataset_name)
 
