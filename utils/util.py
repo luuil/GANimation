@@ -5,6 +5,15 @@ import os
 import torchvision
 import math
 from pickle5 import pickle
+import time
+
+
+def time_now():
+    return time.time()
+
+
+def time_diff_ms(begin):
+    return (time_now() - begin) * 1000
 
 
 def tensor2im(img, imtype=np.uint8, unnormalize=True, idx=0, nrows=None):

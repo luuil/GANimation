@@ -125,17 +125,26 @@ class MorphFaceInTheWild(MorphEyesInTheWild):
         ])
 
     @staticmethod
-    def crop(img, left=True):
-        if left:
-            # roi = (256, 190, 85, 85)
-            # roi = (540, 320, 85, 85)
-            roi = (540, 300, 85, 85)
-        else:
-            # roi = (256 - 85, 190, 85, 85)
-            # roi = (410, 320, 85, 85)
-            roi = (400, 300, 85, 85)
-        x, y, w, h = roi
-        return img[y:y + h, x:x + w], roi
+    def crop(img, idx=0):
+        rois_left = [
+            (256, 190, 85, 85),
+            (540, 320, 85, 85),
+            (540, 300, 85, 85),
+        ]
+        rois_right = [
+            (256 - 85, 190, 85, 85),
+            (410, 320, 85, 85),
+            (400, 300, 85, 85),
+        ]
+        roi_l, roi_r = rois_left[idx], rois_right[idx]
+
+        x, y, w, h = roi_l
+        crop_left = img[y:y + h, x:x + w]
+        # cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0))
+
+        x, y, w, h = roi_r
+        crop_right = img[y:y + h, x:x + w]
+        return crop_left, roi_l, crop_right, roi_r
 
     @staticmethod
     def blend(img, region, roi):
@@ -143,7 +152,7 @@ class MorphFaceInTheWild(MorphEyesInTheWild):
         region = cv2.resize(region, (w, h), interpolation=cv2.INTER_CUBIC)
         img[y:y + h, x:x + w] = region
 
-    def save_imgs_as_video(self, imgs, filename, fps=5):
+    def save_imgs_as_video(self, imgs, filename, fps):
         util.mkdir(self._opt.output_dir)
         clip = ImageSequenceClip(imgs, fps=fps)
         # clip.write_gif(os.path.join(self._opt.output_dir, filename))
@@ -169,36 +178,47 @@ class MorphFaceInTheWild(MorphEyesInTheWild):
         output_name = f'{os.path.basename(img_path)}_{np.random.randint(0, 100)}_out.png'
         self.save_img(img, output_name)
 
-    def morph_face_from_file_video(self, img_path, poses_dict, left=True):
+    def morph_face_from_file_video(self, img_path, n_each_pose=60, fps=30):
         img = cv_utils.read_cv2_img(img_path)
         _w_s, h_s, _c = img.shape
 
-        cropped, roi = self.crop(img, left=left)
-        # x, y, w, h = roi
-        # cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0))
+        crop_left, roi_l, crop_right, roi_r = self.crop(img, idx=0)
 
+        morphed_imgs = list()
+        t0 = util.time_now()
+        cnt = 0
+        poses_dict = self.rnd_poses(n_each_pose, fps)
         for name in poses_dict:
-            morphed_imgs = list()
+            cnt += len(poses_dict[name])
             for pose in poses_dict[name]:
-                imgs = self.morph(cropped, pose)
-                morphed = imgs['result']
+                morphed_left = self.morph(crop_left, pose)['result']
+                if name == 'iris_rotation_y':
+                    pose *= -1
+                morphed_right = self.morph(crop_right, pose)['result']
                 img_cp = img.copy()
-                self.blend(img_cp, morphed, roi)
+                self.blend(img_cp, morphed_left, roi_l)
+                self.blend(img_cp, morphed_right, roi_r)
 
                 cv2.putText(img_cp, f"{name}={pose[np.argmax(pose != 0)]:.03f}", (10, h_s - 20),
                             cv2.FONT_HERSHEY_DUPLEX, 1, (255, 0, 0))
+
                 morphed_imgs.append(img_cp)
-                print(f"{name}={pose[np.argmax(pose != 0)]:.03f}")
 
-            output_name = f'{os.path.basename(img_path)}' \
-                f'_{name}_n{len(poses_dict[name])}_{"left" if left else "right"}.mp4'
-            self.save_imgs_as_video(morphed_imgs, output_name)
+        t_avg = util.time_diff_ms(t0) / (cnt * 2)
+        print(f"infer: {t_avg:.03f}ms")
+        output_name = f'{os.path.basename(img_path)[:-4]}.mp4'
+        # output_name = f'{os.path.basename(img_path)}' \
+        #     f'_{name}_n{len(poses_dict[name])}_{"left" if left else "right"}.mp4'
+        self.save_imgs_as_video(morphed_imgs, output_name, fps)
 
-    def rnd_poses(self, n: int = 10):
+    def rnd_poses(self, n: int = 10, fps=30):
         poses = dict()
         for idx, name in enumerate(self.pose_names):
             value_range = self.pose_value_ranges[idx]
-            values = np.linspace(value_range[0], value_range[1], n)
+            prefix_values = [value_range[0]] * fps
+            suffix_values = [value_range[1]] * fps
+            middle_values = np.linspace(value_range[0], value_range[1], n)
+            values = np.concatenate([prefix_values, middle_values, suffix_values], axis=0)
             poses_cur = list()
             for v in values:
                 pose = np.zeros(len(self.pose_names), dtype=np.float32)
@@ -255,8 +275,7 @@ def main_wild_rnd_poses():
     morph = MorphFaceInTheWild(opt)
 
     image_path = opt.input_path
-    morph.morph_face_from_file_video(image_path, morph.rnd_poses(30), left=True)
-
+    morph.morph_face_from_file_video(image_path, n_each_pose=60, fps=30)
 
 if __name__ == '__main__':
     # main()
