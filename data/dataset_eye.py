@@ -11,6 +11,9 @@ import numpy as np
 
 
 class EyeDataset(Dataset):
+    pose_channels = 9
+    samples_per_pose = 100
+
     def __init__(self, pkl_file, root_dir, is_train=True, debug=False):
         self.name = "EyeDataset"
         self.root_dir = root_dir
@@ -18,10 +21,8 @@ class EyeDataset(Dataset):
         self.is_train = is_train
         img_pose_pairs = pkl_load(pkl_file)
 
-        pose_channels = 9
-        samples_per_pose = 100
-        samples_per_img = pose_channels * samples_per_pose + 1  # 1: in rest pose
-        self.expressive_samples_per_img = pose_channels * samples_per_pose
+        samples_per_img = self.pose_channels * self.samples_per_pose + 1  # 1: in rest pose
+        self.expressive_samples_per_img = self.pose_channels * self.samples_per_pose
 
         rest_pose_imgs = list()
         cnt = 0
